@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Demo</title>
+  <meta name="description" content="" />
+  <meta name="viewport" content="width=device-width" />
+  <base href="/" />
+  <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/css/bootstrap.min.css" />
+  <script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+  <h1>Amazon</h1>
+  <div class="container unauthenticated">
+    <div>
+      Welcome to Amazon !!
+      Login With Google: <a href="/oauth2/authorization/google">click here</a>
+    </div>
+  </div>
+  <div class="container authenticated" style="display: none">
+    Logged in as: <span id="user"></span>
+    Persona : <span id="role"></span>
+    <div>
+      <button onClick="logout()" class="btn btn-primary">Logout</button>
+    </div>
+  </div>
+  <div class="onboard">
+    <select name="persona" id="persona">
+      <option value="Vendor">Vendor</option>
+      <option value="User">User</option>
+    </select>
+    <button type="button" onclick="onboard()">Submit</button>
+  </div>
+  <script type="text/javascript" src="/webjars/js-cookie/js.cookie.js"></script>
+  <script type="text/javascript">
+    $.ajaxSetup({
+      beforeSend: function (xhr, settings) {
+        if (settings.type == 'POST' || settings.type == 'PUT'
+          || settings.type == 'DELETE') {
+          if (!(/^http:.*/.test(settings.url) || /^https:.*/
+            .test(settings.url))) {
+            // Only send the token to relative URLs i.e. locally.
+            xhr.setRequestHeader("X-XSRF-TOKEN", Cookies
+              .get('XSRF-TOKEN'));
+          }
+        }
+      }
+    });   
+    
+    $.get("/user", function (data) {
+      $("#user").html(data.name);
+      $("#role").html(data.role);
+      $(".unauthenticated").hide();
+      $(".authenticated").show();
+      if(document.querySelector('#role').offsetHeight == 0){
+	  	  $(".onboard").hide();
+	  }
+    });    
+
+    var onboard = function () {
+      const val = $("#persona option:selected").text();
+      const role = $("#role").text();
+      if (role == "") {
+        $.get("/signup/?persona=" + val, function (data) {
+          console.log(data);
+          $("#role").html(data.role);
+        });
+      } else {
+        $.get("/update/?persona=" + val, function (data) {
+          console.log(data);
+          $("#role").html(data.role);
+        });
+      }
+      if(document.querySelector('#role').offsetHeight == 0){
+    	  $(".onboard").hide();
+      }
+    }
+
+    var logout = function () {
+      $.post("/logout", function () {
+        $("#user").html('');
+        $(".unauthenticated").show();
+        $(".authenticated").hide();
+         if(document.querySelector('#role').offsetHeight == 0){
+      	  $(".onboard").hide();
+        } 
+      })
+      return true;
+    }
+  </script>
+</body>
+
+</html>
